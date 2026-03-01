@@ -77,13 +77,9 @@ export function useMainKeyboardHandler(): UseMainKeyboardHandlerReturn {
 
 			// CRITICAL: When in terminal mode, let xterm.js handle Ctrl+[A-Z] control sequences.
 			// These include Ctrl+C (SIGINT), Ctrl+D (EOF), Ctrl+Z (suspend), Ctrl+\ (quit), etc.
-			// On macOS, Ctrl is used for terminal control sequences; Cmd (Meta) is for Maestro shortcuts.
-			// On Windows/Linux, Ctrl doubles as the modifier for Maestro shortcuts (Ctrl+F, Ctrl+W, etc.)
-			// so we only bypass for macOS to avoid breaking cross-platform app shortcuts.
-			// Exception: Ctrl+Shift+` always creates a new terminal tab regardless of mode/platform.
-			const isMac = navigator.platform.toUpperCase().includes('MAC');
+			// Only intercept Meta (Cmd) key combos from terminal mode — those are Maestro shortcuts.
+			// Exception: Ctrl+Shift+` always creates a new terminal tab regardless of mode.
 			if (
-				isMac &&
 				ctx.activeSession?.inputMode === 'terminal' &&
 				e.ctrlKey &&
 				!e.metaKey &&
@@ -286,11 +282,12 @@ export function useMainKeyboardHandler(): UseMainKeyboardHandlerReturn {
 				);
 				if (activeTab?.wizardState?.isActive) return;
 				e.preventDefault();
+				const wasAiMode = ctx.activeSession?.inputMode === 'ai';
 				ctx.toggleInputMode();
-				// Auto-focus the input so user can start typing immediately
-				ctx.setActiveFocus('main');
-				setTimeout(() => ctx.inputRef.current?.focus(), FOCUS_AFTER_RENDER_DELAY_MS);
-				trackShortcut('toggleMode');
+				// When switching to terminal mode, focus the active terminal after the DOM updates
+				if (wasAiMode) {
+					setTimeout(() => ctx.mainPanelRef?.current?.focusActiveTerminal(), 100);
+				}				trackShortcut('toggleMode');
 			} else if (ctx.isShortcut(e, 'quickAction')) {
 				e.preventDefault();
 				// In terminal mode, Cmd+K clears the active terminal instead of opening Quick Actions
@@ -490,8 +487,11 @@ export function useMainKeyboardHandler(): UseMainKeyboardHandlerReturn {
 			if (e.ctrlKey && e.shiftKey && !e.metaKey && !e.altKey && e.code === 'Backquote') {
 				e.preventDefault();
 				if (ctx.activeSessionId) {
-					// handleOpenTerminalTab creates the tab and sets inputMode:'terminal' automatically
 					ctx.handleOpenTerminalTab();
+					// Switch to terminal mode if currently in AI mode so the new tab is visible
+					if (ctx.activeSession?.inputMode === 'ai') {
+						ctx.toggleInputMode();
+					}
 					trackShortcut('newTerminalTab');
 				}
 			}
@@ -787,13 +787,10 @@ export function useMainKeyboardHandler(): UseMainKeyboardHandlerReturn {
 				);
 
 				// Cmd+W: Close the active terminal tab (only if more than one exists)
-				// Always preventDefault to prevent native window-close when only one tab remains
-				if (ctx.isTabShortcut(e, 'closeTab')) {
+				if (ctx.isTabShortcut(e, 'closeTab') && terminalTabs.length > 1 && activeTerminalTabId) {
 					e.preventDefault();
-					if (terminalTabs.length > 1 && activeTerminalTabId) {
-						ctx.handleCloseTerminalTab(activeTerminalTabId);
-						trackShortcut('closeTab');
-					}
+					ctx.handleCloseTerminalTab(activeTerminalTabId);
+					trackShortcut('closeTab');
 				}
 
 				// Cmd+Shift+] — Navigate to next terminal tab
