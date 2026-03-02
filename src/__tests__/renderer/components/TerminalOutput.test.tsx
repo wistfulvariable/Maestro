@@ -238,9 +238,11 @@ describe('TerminalOutput', () => {
 			const props = createDefaultProps({ session });
 			render(<TerminalOutput {...props} />);
 
-			// User messages should be right-aligned
-			const userMessageContainer = screen.getByText('User input here').closest('.flex-row-reverse');
-			expect(userMessageContainer).toBeInTheDocument();
+			// User messages should NOT be reversed when right-aligned (default)
+			const userMessageElement = screen.getByText('User input here');
+			const container = userMessageElement.closest('.flex');
+			expect(container).toBeInTheDocument();
+			expect(container?.classList.contains('flex-row-reverse')).toBe(false);
 		});
 
 		it('shows delivered checkmark for delivered messages', () => {
