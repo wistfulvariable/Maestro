@@ -439,8 +439,8 @@ interface HamburgerMenuContentProps {
 	setSettingsTab: (tab: SettingsTab) => void;
 	setLogViewerOpen: (open: boolean) => void;
 	setProcessMonitorOpen: (open: boolean) => void;
-	setUsageDashboardOpen: (open: boolean) => void;
-	setSymphonyModalOpen: (open: boolean) => void;
+	setUsageDashboardOpen?: (open: boolean) => void;
+	setSymphonyModalOpen?: (open: boolean) => void;
 	setDirectorNotesOpen?: (open: boolean) => void;
 	setUpdateCheckModalOpen: (open: boolean) => void;
 	setAboutModalOpen: (open: boolean) => void;
@@ -655,52 +655,56 @@ function HamburgerMenuContent({
 					{formatShortcutKeys(shortcuts.processMonitor.keys)}
 				</span>
 			</button>
-			<button
-				onClick={() => {
-					setUsageDashboardOpen(true);
-					setMenuOpen(false);
-				}}
-				className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md hover:bg-white/10 transition-colors text-left"
-			>
-				<BarChart3 className="w-5 h-5" style={{ color: theme.colors.accent }} />
-				<div className="flex-1">
-					<div className="text-sm font-medium" style={{ color: theme.colors.textMain }}>
-						Usage Dashboard
-					</div>
-					<div className="text-xs" style={{ color: theme.colors.textDim }}>
-						View usage analytics
-					</div>
-				</div>
-				<span
-					className="text-xs font-mono px-1.5 py-0.5 rounded"
-					style={{ backgroundColor: theme.colors.bgActivity, color: theme.colors.textDim }}
+			{setUsageDashboardOpen && (
+				<button
+					onClick={() => {
+						setUsageDashboardOpen(true);
+						setMenuOpen(false);
+					}}
+					className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md hover:bg-white/10 transition-colors text-left"
 				>
-					{formatShortcutKeys(shortcuts.usageDashboard.keys)}
-				</span>
-			</button>
-			<button
-				onClick={() => {
-					setSymphonyModalOpen(true);
-					setMenuOpen(false);
-				}}
-				className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md hover:bg-white/10 transition-colors text-left"
-			>
-				<Music className="w-5 h-5" style={{ color: theme.colors.accent }} />
-				<div className="flex-1">
-					<div className="text-sm font-medium" style={{ color: theme.colors.textMain }}>
-						Maestro Symphony
+					<BarChart3 className="w-5 h-5" style={{ color: theme.colors.accent }} />
+					<div className="flex-1">
+						<div className="text-sm font-medium" style={{ color: theme.colors.textMain }}>
+							Usage Dashboard
+						</div>
+						<div className="text-xs" style={{ color: theme.colors.textDim }}>
+							View usage analytics
+						</div>
 					</div>
-					<div className="text-xs" style={{ color: theme.colors.textDim }}>
-						Contribute to open source
-					</div>
-				</div>
-				<span
-					className="text-xs font-mono px-1.5 py-0.5 rounded"
-					style={{ backgroundColor: theme.colors.bgActivity, color: theme.colors.textDim }}
+					<span
+						className="text-xs font-mono px-1.5 py-0.5 rounded"
+						style={{ backgroundColor: theme.colors.bgActivity, color: theme.colors.textDim }}
+					>
+						{formatShortcutKeys(shortcuts.usageDashboard.keys)}
+					</span>
+				</button>
+			)}
+			{setSymphonyModalOpen && (
+				<button
+					onClick={() => {
+						setSymphonyModalOpen(true);
+						setMenuOpen(false);
+					}}
+					className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md hover:bg-white/10 transition-colors text-left"
 				>
-					{shortcuts.openSymphony ? formatShortcutKeys(shortcuts.openSymphony.keys) : '⇧⌘Y'}
-				</span>
-			</button>
+					<Music className="w-5 h-5" style={{ color: theme.colors.accent }} />
+					<div className="flex-1">
+						<div className="text-sm font-medium" style={{ color: theme.colors.textMain }}>
+							Maestro Symphony
+						</div>
+						<div className="text-xs" style={{ color: theme.colors.textDim }}>
+							Contribute to open source
+						</div>
+					</div>
+					<span
+						className="text-xs font-mono px-1.5 py-0.5 rounded"
+						style={{ backgroundColor: theme.colors.bgActivity, color: theme.colors.textDim }}
+					>
+						{shortcuts.openSymphony ? formatShortcutKeys(shortcuts.openSymphony.keys) : '⇧⌘Y'}
+					</span>
+				</button>
+			)}
 			{setDirectorNotesOpen && (
 				<button
 					onClick={() => {
@@ -1078,8 +1082,8 @@ interface SessionListProps {
 	setUpdateCheckModalOpen: (open: boolean) => void;
 	setLogViewerOpen: (open: boolean) => void;
 	setProcessMonitorOpen: (open: boolean) => void;
-	setUsageDashboardOpen: (open: boolean) => void;
-	setSymphonyModalOpen: (open: boolean) => void;
+	setUsageDashboardOpen?: (open: boolean) => void;
+	setSymphonyModalOpen?: (open: boolean) => void;
 	setDirectorNotesOpen?: (open: boolean) => void;
 	setQuickActionOpen: (open: boolean) => void;
 	toggleGroup: (groupId: string) => void;

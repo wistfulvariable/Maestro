@@ -648,6 +648,7 @@ function setupIpcHandlers() {
 		app,
 		getMainWindow: () => mainWindow,
 		sessionsStore,
+		settingsStore: store,
 	});
 
 	// Register tab naming handlers for automatic tab naming

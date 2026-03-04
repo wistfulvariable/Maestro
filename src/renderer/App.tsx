@@ -11494,7 +11494,7 @@ You are taking over this conversation. Based on the context above, provide a bri
 		setLogViewerOpen,
 		setProcessMonitorOpen,
 		setUsageDashboardOpen,
-		setSymphonyModalOpen,
+		setSymphonyModalOpen: encoreFeatures.symphony ? setSymphonyModalOpen : undefined,
 		setDirectorNotesOpen: encoreFeatures.directorNotes ? setDirectorNotesOpen : undefined,
 		setGroups,
 		setSessions,
@@ -11777,7 +11777,7 @@ You are taking over this conversation. Based on the context above, provide a bri
 					onCloseProcessMonitor={handleCloseProcessMonitor}
 					onNavigateToSession={handleProcessMonitorNavigateToSession}
 					onNavigateToGroupChat={handleProcessMonitorNavigateToGroupChat}
-					usageDashboardOpen={usageDashboardOpen}
+					usageDashboardOpen={encoreFeatures.usageStats && usageDashboardOpen}
 					onCloseUsageDashboard={() => setUsageDashboardOpen(false)}
 					defaultStatsTimeRange={defaultStatsTimeRange}
 					colorBlindMode={colorBlindMode}
@@ -11866,7 +11866,7 @@ You are taking over this conversation. Based on the context above, provide a bri
 					setAboutModalOpen={setAboutModalOpen}
 					setLogViewerOpen={setLogViewerOpen}
 					setProcessMonitorOpen={setProcessMonitorOpen}
-					setUsageDashboardOpen={setUsageDashboardOpen}
+					setUsageDashboardOpen={encoreFeatures.usageStats ? setUsageDashboardOpen : undefined}
 					setActiveRightTab={setActiveRightTab}
 					setAgentSessionsOpen={setAgentSessionsOpen}
 					setActiveAgentSessionId={setActiveAgentSessionId}
@@ -11945,7 +11945,7 @@ You are taking over this conversation. Based on the context above, provide a bri
 					getDocumentTaskCount={getDocumentTaskCount}
 					onAutoRunRefresh={handleAutoRunRefresh}
 					onOpenMarketplace={handleOpenMarketplace}
-					onOpenSymphony={() => setSymphonyModalOpen(true)}
+					onOpenSymphony={encoreFeatures.symphony ? () => setSymphonyModalOpen(true) : undefined}
 					onOpenDirectorNotes={encoreFeatures.directorNotes ? () => setDirectorNotesOpen(true) : undefined}
 					tabSwitcherOpen={tabSwitcherOpen}
 					onCloseTabSwitcher={handleCloseTabSwitcher}
@@ -12118,7 +12118,7 @@ You are taking over this conversation. Based on the context above, provide a bri
 				)}
 
 				{/* --- SYMPHONY MODAL (lazy-loaded) --- */}
-				{symphonyModalOpen && (
+				{encoreFeatures.symphony && symphonyModalOpen && (
 					<Suspense fallback={null}>
 						<SymphonyModal
 							theme={theme}
