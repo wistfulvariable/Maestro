@@ -464,7 +464,7 @@ describe('useMainKeyboardHandler', () => {
 		it('should allow toggleMode shortcut (Cmd+J) when only overlays are open', () => {
 			const { result } = renderHook(() => useMainKeyboardHandler());
 
-			const mockToggleInputMode = vi.fn();
+			const mockHandleOpenTerminalTab = vi.fn();
 			const mockActiveSession = {
 				id: 'test-session',
 				name: 'Test',
@@ -481,7 +481,7 @@ describe('useMainKeyboardHandler', () => {
 				isShortcut: (_e: KeyboardEvent, actionId: string) => actionId === 'toggleMode',
 				activeSessionId: 'test-session',
 				activeSession: mockActiveSession,
-				toggleInputMode: mockToggleInputMode,
+				handleOpenTerminalTab: mockHandleOpenTerminalTab,
 			});
 
 			act(() => {
@@ -494,8 +494,8 @@ describe('useMainKeyboardHandler', () => {
 				);
 			});
 
-			// Cmd+J should toggle mode even when file preview overlay is open
-			expect(mockToggleInputMode).toHaveBeenCalled();
+			// Cmd+J should open a new terminal tab even when file preview overlay is open
+			expect(mockHandleOpenTerminalTab).toHaveBeenCalled();
 		});
 
 		it('should allow tab cycle shortcut with brace characters when layers are open', () => {
@@ -826,7 +826,7 @@ describe('useMainKeyboardHandler', () => {
 		it('should allow toggleMode (Cmd+J) for regular tabs', () => {
 			const { result } = renderHook(() => useMainKeyboardHandler());
 
-			const mockToggleInputMode = vi.fn();
+			const mockHandleOpenTerminalTab = vi.fn();
 			const regularTab = {
 				id: 'tab-1',
 				name: 'Regular Tab',
@@ -843,7 +843,7 @@ describe('useMainKeyboardHandler', () => {
 					inputMode: 'ai',
 				},
 				activeSessionId: 'session-1',
-				toggleInputMode: mockToggleInputMode,
+				handleOpenTerminalTab: mockHandleOpenTerminalTab,
 			});
 
 			act(() => {
@@ -856,14 +856,14 @@ describe('useMainKeyboardHandler', () => {
 				);
 			});
 
-			// toggleInputMode SHOULD be called for regular tabs
-			expect(mockToggleInputMode).toHaveBeenCalled();
+			// handleOpenTerminalTab SHOULD be called for regular tabs
+			expect(mockHandleOpenTerminalTab).toHaveBeenCalled();
 		});
 
 		it('should allow toggleMode when wizardState exists but isActive is false', () => {
 			const { result } = renderHook(() => useMainKeyboardHandler());
 
-			const mockToggleInputMode = vi.fn();
+			const mockHandleOpenTerminalTab = vi.fn();
 			const completedWizardTab = {
 				id: 'tab-1',
 				name: 'Completed Wizard',
@@ -880,7 +880,7 @@ describe('useMainKeyboardHandler', () => {
 					inputMode: 'ai',
 				},
 				activeSessionId: 'session-1',
-				toggleInputMode: mockToggleInputMode,
+				handleOpenTerminalTab: mockHandleOpenTerminalTab,
 			});
 
 			act(() => {
@@ -893,8 +893,8 @@ describe('useMainKeyboardHandler', () => {
 				);
 			});
 
-			// toggleInputMode SHOULD be called when wizard is not active
-			expect(mockToggleInputMode).toHaveBeenCalled();
+			// handleOpenTerminalTab SHOULD be called when wizard is not active
+			expect(mockHandleOpenTerminalTab).toHaveBeenCalled();
 		});
 	});
 
