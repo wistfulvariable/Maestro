@@ -78,6 +78,11 @@ export const DEFAULT_SHORTCUTS: Record<string, Shortcut> = {
 		label: "Director's Notes",
 		keys: ['Meta', 'Shift', 'o'],
 	},
+	filterUnreadAgents: {
+		id: 'filterUnreadAgents',
+		label: 'Filter Unread Agents',
+		keys: ['Meta', 'Shift', 'u'],
+	},
 };
 
 // Non-editable shortcuts (displayed in help but not configurable)
@@ -178,7 +183,7 @@ export const TAB_SHORTCUTS: Record<string, Shortcut> = {
 	toggleTabUnread: {
 		id: 'toggleTabUnread',
 		label: 'Toggle Tab Unread',
-		keys: ['Meta', 'Shift', 'u'],
+		keys: ['Alt', 'Shift', 'u'],
 	},
 	goToTab1: { id: 'goToTab1', label: 'Go to Tab 1', keys: ['Meta', '1'] },
 	goToTab2: { id: 'goToTab2', label: 'Go to Tab 2', keys: ['Meta', '2'] },
