@@ -973,9 +973,16 @@ export function NewInstanceModal({
 																},
 															}));
 														}}
-														onConfigBlur={() => {
-															const currentConfig = agentConfigs[agent.id] || {};
-															window.maestro.agents.setConfig(agent.id, currentConfig);
+														onConfigBlur={(key, value) => {
+															const updatedConfig = {
+																...(agentConfigs[agent.id] || {}),
+																[key]: value,
+															};
+															void window.maestro.agents
+																.setConfig(agent.id, updatedConfig)
+																.catch((error) => {
+																	console.error(`Failed to persist config for ${agent.id}:`, error);
+																});
 														}}
 														availableModels={availableModels[agent.id] || []}
 														loadingModels={loadingModels[agent.id] || false}
@@ -1799,16 +1806,21 @@ export function EditAgentModal({
 								onConfigChange={(key, value) => {
 									setAgentConfig((prev) => ({ ...prev, [key]: value }));
 								}}
-								onConfigBlur={() => {
+								onConfigBlur={(key, value) => {
 									// Both model and contextWindow are now saved per-session on modal save
 									// Other config options (if any) can still be saved at agent level
+									const updatedConfig = { ...agentConfig, [key]: value };
 									const {
 										model: _model,
 										contextWindow: _contextWindow,
 										...otherConfig
-									} = agentConfig;
+									} = updatedConfig;
 									if (Object.keys(otherConfig).length > 0) {
-										window.maestro.agents.setConfig(selectedToolType, otherConfig);
+										void window.maestro.agents
+											.setConfig(selectedToolType, otherConfig)
+											.catch((error) => {
+												console.error(`Failed to persist config for ${selectedToolType}:`, error);
+											});
 									}
 								}}
 								availableModels={availableModels}

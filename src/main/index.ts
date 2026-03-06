@@ -596,6 +596,7 @@ function setupIpcHandlers() {
 	registerDirectorNotesHandlers({
 		getProcessManager: () => processManager,
 		getAgentDetector: () => agentDetector,
+		agentConfigsStore,
 	});
 
 	// Cue - event-driven automation engine
@@ -697,6 +698,7 @@ function setupIpcHandlers() {
 		getMainWindow: () => mainWindow,
 		getProcessManager: () => processManager,
 		getAgentDetector: () => agentDetector,
+		agentConfigsStore,
 	});
 
 	// Register Marketplace handlers for fetching and importing playbooks

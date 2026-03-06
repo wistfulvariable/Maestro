@@ -235,6 +235,7 @@ export function registerAllHandlers(deps: HandlerDependencies): void {
 		getMainWindow: deps.getMainWindow,
 		getProcessManager: deps.getProcessManager,
 		getAgentDetector: deps.getAgentDetector,
+		agentConfigsStore: deps.agentConfigsStore,
 	});
 	// Register marketplace handlers
 	registerMarketplaceHandlers({
@@ -287,6 +288,7 @@ export function registerAllHandlers(deps: HandlerDependencies): void {
 	registerDirectorNotesHandlers({
 		getProcessManager: deps.getProcessManager,
 		getAgentDetector: deps.getAgentDetector,
+		agentConfigsStore: deps.agentConfigsStore,
 	});
 	// Setup logger event forwarding to renderer
 	setupLoggerEventForwarding(deps.getMainWindow);
