@@ -39,6 +39,13 @@ vi.mock('../../../renderer/components/CueYamlEditor', () => ({
 		isOpen ? <div data-testid="cue-yaml-editor">YAML Editor Mock</div> : null,
 }));
 
+// Mock CueGraphView
+vi.mock('../../../renderer/components/CueGraphView', () => ({
+	CueGraphView: ({ theme, onClose }: { theme: unknown; onClose: () => void }) => (
+		<div data-testid="cue-graph-view">Graph View Mock</div>
+	),
+}));
+
 // Mock useCue hook
 const mockEnable = vi.fn().mockResolvedValue(undefined);
 const mockDisable = vi.fn().mockResolvedValue(undefined);
@@ -322,6 +329,75 @@ describe('CueModal', () => {
 
 			fireEvent.click(screen.getByText('Disabled'));
 			expect(mockEnable).toHaveBeenCalledOnce();
+		});
+	});
+
+	describe('tabs', () => {
+		it('should render Dashboard and Graph tabs', () => {
+			render(<CueModal theme={mockTheme} onClose={mockOnClose} />);
+
+			expect(screen.getByText('Dashboard')).toBeInTheDocument();
+			expect(screen.getByText('Graph')).toBeInTheDocument();
+		});
+
+		it('should show dashboard content by default', () => {
+			render(<CueModal theme={mockTheme} onClose={mockOnClose} />);
+
+			expect(screen.getByText('Sessions with Cue')).toBeInTheDocument();
+		});
+
+		it('should switch to graph view when Graph tab is clicked', () => {
+			render(<CueModal theme={mockTheme} onClose={mockOnClose} />);
+
+			fireEvent.click(screen.getByText('Graph'));
+
+			expect(screen.getByTestId('cue-graph-view')).toBeInTheDocument();
+			// Dashboard content should not be visible
+			expect(screen.queryByText('Sessions with Cue')).not.toBeInTheDocument();
+		});
+
+		it('should switch back to dashboard when Dashboard tab is clicked', () => {
+			render(<CueModal theme={mockTheme} onClose={mockOnClose} />);
+
+			// Switch to graph
+			fireEvent.click(screen.getByText('Graph'));
+			expect(screen.getByTestId('cue-graph-view')).toBeInTheDocument();
+
+			// Switch back to dashboard
+			fireEvent.click(screen.getByText('Dashboard'));
+			expect(screen.getByText('Sessions with Cue')).toBeInTheDocument();
+			expect(screen.queryByTestId('cue-graph-view')).not.toBeInTheDocument();
+		});
+	});
+
+	describe('toggle styling', () => {
+		it('should use theme accent color for enabled toggle', () => {
+			mockUseCueReturn = {
+				...defaultUseCueReturn,
+				sessions: [mockSession],
+			};
+
+			render(<CueModal theme={mockTheme} onClose={mockOnClose} />);
+
+			const enabledButton = screen.getByText('Enabled').closest('button');
+			expect(enabledButton).toHaveStyle({
+				color: mockTheme.colors.accent,
+			});
+
+			// The toggle pill should use theme accent
+			const togglePill = enabledButton?.querySelector('.rounded-full');
+			expect(togglePill).toHaveStyle({
+				backgroundColor: mockTheme.colors.accent,
+			});
+		});
+
+		it('should use dim colors for disabled toggle', () => {
+			render(<CueModal theme={mockTheme} onClose={mockOnClose} />);
+
+			const disabledButton = screen.getByText('Disabled').closest('button');
+			expect(disabledButton).toHaveStyle({
+				color: mockTheme.colors.textDim,
+			});
 		});
 	});
 
