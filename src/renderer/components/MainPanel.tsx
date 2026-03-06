@@ -1777,6 +1777,7 @@ const chatRawTextMode = useSettingsStore((s) => s.chatRawTextMode);
 												onTabPidChange={createTabPidChangeHandler(activeSession.id)}
 												searchOpen={terminalSearchOpen}
 												onSearchClose={() => setTerminalSearchOpen(false)}
+												isVisible={activeSession.inputMode === 'terminal'}
 											/>
 										</div>
 									)}
