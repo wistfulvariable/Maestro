@@ -41,33 +41,33 @@ export class PtySpawner {
 			let ptyArgs: string[];
 
 			if (isTerminal) {
-				if (!shell) {
-					// No shell specified — use the explicit command/args directly (e.g. ssh for remote terminals)
-					ptyCommand = command;
-					ptyArgs = args;
-				} else {
-					// Full shell emulation: launch the shell with login+interactive flags
+				// Full shell emulation for terminal mode
+				if (shell) {
 					ptyCommand = shell;
-					ptyArgs = isWindows() ? [] : ['-l', '-i'];
+				} else {
+					ptyCommand = isWindows() ? 'powershell.exe' : 'bash';
+				}
 
-					// Append custom shell arguments from user configuration
-					if (shellArgs && shellArgs.trim()) {
-						const customShellArgsArray = shellArgs.match(/(?:[^\s"']+|"[^"]*"|'[^']*')+/g) || [];
-						const cleanedArgs = customShellArgsArray.map((arg) => {
-							if (
-								(arg.startsWith('"') && arg.endsWith('"')) ||
-								(arg.startsWith("'") && arg.endsWith("'"))
-							) {
-								return arg.slice(1, -1);
-							}
-							return arg;
-						});
-						if (cleanedArgs.length > 0) {
-							logger.debug('Appending custom shell args', 'ProcessManager', {
-								shellArgs: cleanedArgs,
-							});
-							ptyArgs = [...ptyArgs, ...cleanedArgs];
+				// Use -l (login) AND -i (interactive) flags for fully configured shell
+				ptyArgs = isWindows() ? [] : ['-l', '-i'];
+
+				// Append custom shell arguments from user configuration
+				if (shellArgs && shellArgs.trim()) {
+					const customShellArgsArray = shellArgs.match(/(?:[^\s"']+|"[^"]*"|'[^']*')+/g) || [];
+					const cleanedArgs = customShellArgsArray.map((arg) => {
+						if (
+							(arg.startsWith('"') && arg.endsWith('"')) ||
+							(arg.startsWith("'") && arg.endsWith("'"))
+						) {
+							return arg.slice(1, -1);
 						}
+						return arg;
+					});
+					if (cleanedArgs.length > 0) {
+						logger.debug('Appending custom shell args', 'ProcessManager', {
+							shellArgs: cleanedArgs,
+						});
+						ptyArgs = [...ptyArgs, ...cleanedArgs];
 					}
 				}
 			} else {
@@ -103,8 +103,8 @@ export class PtySpawner {
 
 			const ptyProcess = pty.spawn(ptyCommand, ptyArgs, {
 				name: 'xterm-256color',
-				cols: config.cols || 100,
-				rows: config.rows || 30,
+				cols: 100,
+				rows: 30,
 				cwd: cwd,
 				env: ptyEnv as Record<string, string>,
 			});
@@ -123,35 +123,18 @@ export class PtySpawner {
 
 			this.processes.set(sessionId, managedProcess);
 
-			// Terminal tab session IDs use the format {sessionId}-terminal-{tabId}.
-			// xterm.js renders escape sequences itself, so raw PTY data must be forwarded
-			// without any stripping. All other sessions go through stripControlSequences.
-			const isTerminalTab = sessionId.includes('-terminal-');
-
 			// Handle output
 			ptyProcess.onData((data) => {
-				if (isTerminalTab) {
-					// Raw pass-through for xterm.js terminal tabs — no filtering
-					if (data.length > 0) {
-						logger.debug('[ProcessManager] PTY onData (raw)', 'ProcessManager', {
-							sessionId,
-							pid: ptyProcess.pid,
-							dataLength: data.length,
-						});
-						this.bufferManager.emitDataBuffered(sessionId, data);
-					}
-				} else {
-					const managedProc = this.processes.get(sessionId);
-					const cleanedData = stripControlSequences(data, managedProc?.lastCommand, isTerminal);
-					logger.debug('[ProcessManager] PTY onData', 'ProcessManager', {
-						sessionId,
-						pid: ptyProcess.pid,
-						dataPreview: cleanedData.substring(0, 100),
-					});
-					// Only emit if there's actual content after filtering
-					if (cleanedData.trim()) {
-						this.bufferManager.emitDataBuffered(sessionId, cleanedData);
-					}
+				const managedProc = this.processes.get(sessionId);
+				const cleanedData = stripControlSequences(data, managedProc?.lastCommand, isTerminal);
+				logger.debug('[ProcessManager] PTY onData', 'ProcessManager', {
+					sessionId,
+					pid: ptyProcess.pid,
+					dataPreview: cleanedData.substring(0, 100),
+				});
+				// Only emit if there's actual content after filtering
+				if (cleanedData.trim()) {
+					this.bufferManager.emitDataBuffered(sessionId, cleanedData);
 				}
 			});
 
