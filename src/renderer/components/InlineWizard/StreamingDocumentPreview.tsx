@@ -16,7 +16,7 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { getSyntaxStyle } from '../../utils/syntaxTheme';
 import { FileText, Code2, AlignLeft } from 'lucide-react';
 import type { Theme } from '../../types';
 
@@ -198,7 +198,7 @@ export function StreamingDocumentPreview({
 				return !inline && match ? (
 					<SyntaxHighlighter
 						language={language}
-						style={vscDarkPlus}
+						style={getSyntaxStyle(theme.mode)}
 						customStyle={{
 							margin: '0.5em 0',
 							padding: '0.75em',

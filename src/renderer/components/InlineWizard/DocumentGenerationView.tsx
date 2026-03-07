@@ -16,7 +16,7 @@ import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { getSyntaxStyle } from '../../utils/syntaxTheme';
 import { Eye, Edit, ChevronDown, ChevronRight, X, Loader2, FileText, Check } from 'lucide-react';
 import type { Theme } from '../../types';
 import type { GeneratedDocument } from '../Wizard/WizardContext';
@@ -612,7 +612,7 @@ function DocumentEditor({
 				return !inline && match ? (
 					<SyntaxHighlighter
 						language={language}
-						style={vscDarkPlus}
+						style={getSyntaxStyle(theme.mode)}
 						customStyle={{
 							margin: '0.5em 0',
 							padding: '1em',
