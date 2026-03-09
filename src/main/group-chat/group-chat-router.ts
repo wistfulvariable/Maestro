@@ -50,6 +50,18 @@ import { groupChatEmitters } from '../ipc/handlers/groupChat';
 
 const LOG_CONTEXT = '[GroupChatRouter]';
 
+/**
+ * Returns ['--no-sandbox'] for Gemini CLI agents that have CLI-enforced read-only mode,
+ * empty array otherwise. Without CLI-enforced read-only, removing the sandbox would
+ * grant unsandboxed write capability.
+ */
+function getGeminiNoSandboxArgs(
+	agentId: string,
+	agent: { readOnlyCliEnforced?: boolean }
+): string[] {
+	return agentId === 'gemini-cli' && !!agent.readOnlyCliEnforced ? ['--no-sandbox'] : [];
+}
+
 // Re-export setGetCustomShellPathCallback for index.ts to use
 export { setGetCustomShellPathCallback };
 
@@ -474,14 +486,10 @@ ${message}`;
 				sessionCustomEnvVars: chat.moderatorConfig?.customEnvVars,
 			});
 
-			// For Gemini CLI: only disable workspace sandbox when read-only mode is
-			// CLI-enforced. Without hard read-only enforcement, removing the sandbox
-			// would give the moderator unsandboxed write capability.
-			// The CWD is already set to the group chat folder to avoid "path not in workspace" errors.
-			const geminiCanBeUnsandboxed =
-				chat.moderatorAgentId === 'gemini-cli' && !!agent.readOnlyCliEnforced;
-			const geminiNoSandbox = geminiCanBeUnsandboxed ? ['--no-sandbox'] : [];
-			const finalArgs = [...configResolution.args, ...geminiNoSandbox];
+			const finalArgs = [
+				...configResolution.args,
+				...getGeminiNoSandboxArgs(chat.moderatorAgentId, agent),
+			];
 			console.log(`[GroupChat:Debug] Args: ${JSON.stringify(finalArgs)}`);
 
 			console.log(`[GroupChat:Debug] Full prompt length: ${fullPrompt.length} chars`);
@@ -873,7 +881,10 @@ export async function routeModeratorResponse(
 
 				// Log spawn details for debugging
 				const spawnCommand = agent.path || agent.command;
-				const spawnArgs = configResolution.args;
+				const spawnArgs = [
+					...configResolution.args,
+					...getGeminiNoSandboxArgs(participant.agentId, agent),
+				];
 				console.log(`[GroupChat:Debug] Spawn command: ${spawnCommand}`);
 				console.log(`[GroupChat:Debug] Spawn args: ${JSON.stringify(spawnArgs)}`);
 				console.log(
@@ -1250,12 +1261,10 @@ Review the agent responses above. Either:
 		sessionCustomEnvVars: chat.moderatorConfig?.customEnvVars,
 	});
 
-	// For Gemini CLI: only disable workspace sandbox when read-only mode is
-	// CLI-enforced (same rationale as moderator spawn above)
-	const geminiCanBeUnsandboxed =
-		chat.moderatorAgentId === 'gemini-cli' && !!agent.readOnlyCliEnforced;
-	const geminiSynthNoSandbox = geminiCanBeUnsandboxed ? ['--no-sandbox'] : [];
-	const finalArgs = [...configResolution.args, ...geminiSynthNoSandbox];
+	const finalArgs = [
+		...configResolution.args,
+		...getGeminiNoSandboxArgs(chat.moderatorAgentId, agent),
+	];
 	console.log(`[GroupChat:Debug] Args: ${JSON.stringify(finalArgs)}`);
 
 	console.log(`[GroupChat:Debug] Synthesis prompt length: ${synthesisPrompt.length} chars`);
@@ -1428,7 +1437,10 @@ export async function respawnParticipantWithRecovery(
 
 	// Spawn the recovery process — with SSH wrapping if configured
 	let finalSpawnCommand = agent.path || agent.command;
-	let finalSpawnArgs = configResolution.args;
+	let finalSpawnArgs = [
+		...configResolution.args,
+		...getGeminiNoSandboxArgs(participant.agentId, agent),
+	];
 	let finalSpawnCwd = cwd;
 	let finalSpawnPrompt: string | undefined = fullPrompt;
 	let finalSpawnEnvVars =
