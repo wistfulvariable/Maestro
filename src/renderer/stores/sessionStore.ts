@@ -360,6 +360,17 @@ export const selectUngroupedSessions = (state: SessionStore): Session[] =>
 	state.sessions.filter((s) => !s.groupId && !s.parentSessionId);
 
 /**
+ * Select sessions belonging to a specific project.
+ *
+ * @example
+ * const projectSessions = useSessionStore(selectSessionsByProject('project-1'));
+ */
+export const selectSessionsByProject =
+	(projectId: string) =>
+	(state: SessionStore): Session[] =>
+		state.sessions.filter((s) => s.projectId === projectId);
+
+/**
  * Select a group by ID.
  *
  * @example

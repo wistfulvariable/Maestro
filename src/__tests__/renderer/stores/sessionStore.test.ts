@@ -7,6 +7,7 @@ import {
 	selectBookmarkedSessions,
 	selectSessionsByGroup,
 	selectUngroupedSessions,
+	selectSessionsByProject,
 	selectGroupById,
 	selectSessionCount,
 	selectIsReady,
@@ -560,6 +561,27 @@ describe('sessionStore', () => {
 				const ungrouped = selectUngroupedSessions(useSessionStore.getState());
 				expect(ungrouped).toHaveLength(2);
 				expect(ungrouped.map((s) => s.id)).toEqual(['a', 'd']);
+			});
+		});
+
+		describe('selectSessionsByProject', () => {
+			it('should return sessions matching projectId', () => {
+				const sessions = [
+					createMockSession({ id: 's1', projectId: 'p1' }),
+					createMockSession({ id: 's2', projectId: 'p2' }),
+					createMockSession({ id: 's3', projectId: 'p1' }),
+				];
+				useSessionStore.setState({ sessions });
+				const result = selectSessionsByProject('p1')(useSessionStore.getState());
+				expect(result).toHaveLength(2);
+				expect(result.map((s) => s.id)).toEqual(['s1', 's3']);
+			});
+
+			it('should return empty array for unknown projectId', () => {
+				const sessions = [createMockSession({ id: 's1', projectId: 'p1' })];
+				useSessionStore.setState({ sessions });
+				const result = selectSessionsByProject('nonexistent')(useSessionStore.getState());
+				expect(result).toHaveLength(0);
 			});
 		});
 
