@@ -12,6 +12,7 @@ import type {
 	MaestroSettings,
 	SessionsData,
 	GroupsData,
+	ProjectsData,
 	AgentConfigsData,
 	WindowState,
 	ClaudeSessionOriginsData,
@@ -79,6 +80,10 @@ export const SESSIONS_DEFAULTS: SessionsData = {
 
 export const GROUPS_DEFAULTS: GroupsData = {
 	groups: [],
+};
+
+export const PROJECTS_DEFAULTS: ProjectsData = {
+	projects: [],
 };
 
 export const AGENT_CONFIGS_DEFAULTS: AgentConfigsData = {

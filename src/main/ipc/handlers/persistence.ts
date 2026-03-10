@@ -19,9 +19,9 @@ import { getThemeById } from '../../themes';
 import { WebServer } from '../../web-server';
 
 // Re-export types from canonical source so existing imports from './persistence' still work
-export type { MaestroSettings, SessionsData, GroupsData } from '../../stores/types';
-import type { MaestroSettings, SessionsData, GroupsData, StoredSession } from '../../stores/types';
-import type { Group } from '../../../shared/types';
+export type { MaestroSettings, SessionsData, GroupsData, ProjectsData } from '../../stores/types';
+import type { MaestroSettings, SessionsData, GroupsData, ProjectsData, StoredSession } from '../../stores/types';
+import type { Group, Project } from '../../../shared/types';
 
 /**
  * Dependencies required for persistence handlers
@@ -30,6 +30,7 @@ export interface PersistenceHandlerDependencies {
 	settingsStore: Store<MaestroSettings>;
 	sessionsStore: Store<SessionsData>;
 	groupsStore: Store<GroupsData>;
+	projectsStore: Store<ProjectsData>;
 	getWebServer: () => WebServer | null;
 }
 
@@ -37,7 +38,7 @@ export interface PersistenceHandlerDependencies {
  * Register all persistence-related IPC handlers.
  */
 export function registerPersistenceHandlers(deps: PersistenceHandlerDependencies): void {
-	const { settingsStore, sessionsStore, groupsStore, getWebServer } = deps;
+	const { settingsStore, sessionsStore, groupsStore, projectsStore, getWebServer } = deps;
 
 	// Settings management
 	ipcMain.handle('settings:get', async (_, key: string) => {
@@ -199,6 +200,22 @@ export function registerPersistenceHandlers(deps: PersistenceHandlerDependencies
 		} catch (err) {
 			const code = (err as NodeJS.ErrnoException).code;
 			logger.warn(`Failed to persist groups: ${code || (err as Error).message}`, 'Groups');
+			return false;
+		}
+		return true;
+	});
+
+	// Projects persistence
+	ipcMain.handle('projects:getAll', async () => {
+		return projectsStore.get('projects', []);
+	});
+
+	ipcMain.handle('projects:setAll', async (_, projects: Project[]) => {
+		try {
+			projectsStore.set('projects', projects);
+		} catch (err) {
+			const code = (err as NodeJS.ErrnoException).code;
+			logger.warn(`Failed to persist projects: ${code || (err as Error).message}`, 'Projects');
 			return false;
 		}
 		return true;
