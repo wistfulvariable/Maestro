@@ -1,9 +1,9 @@
 /**
- * sessionStore - Zustand store for centralized session and group state management
+ * sessionStore - Zustand store for centralized session state management
  *
- * All session, group, active session, bookmark, worktree tracking, and
- * initialization states live here. Components subscribe to individual slices
- * via selectors to avoid unnecessary re-renders.
+ * All session, active session, worktree tracking, and initialization states
+ * live here. Components subscribe to individual slices via selectors to avoid
+ * unnecessary re-renders.
  *
  * Key advantages:
  * - Selector-based subscriptions: components only re-render when their slice changes
@@ -76,34 +76,17 @@ export interface SessionStoreActions {
 	 */
 	setActiveSessionIdInternal: (id: string | ((prev: string) => string)) => void;
 
-	// === Groups ===
+	// === Groups (legacy — retained for migration consumers) ===
 
 	/**
 	 * Set the groups array. Supports both direct value and functional updater.
 	 */
 	setGroups: (groups: Group[] | ((prev: Group[]) => Group[])) => void;
 
-	/** Add a single group. */
-	addGroup: (group: Group) => void;
-
-	/** Remove a group by ID. */
-	removeGroup: (id: string) => void;
-
-	/** Update a group by ID with a partial update. */
-	updateGroup: (id: string, updates: Partial<Group>) => void;
-
-	/** Toggle a group's collapsed state. */
-	toggleGroupCollapsed: (id: string) => void;
-
 	// === Initialization ===
 
 	setSessionsLoaded: (loaded: boolean | ((prev: boolean) => boolean)) => void;
 	setInitialLoadComplete: (complete: boolean | ((prev: boolean) => boolean)) => void;
-
-	// === Bookmarks ===
-
-	/** Toggle the bookmark flag on a session. */
-	toggleBookmark: (sessionId: string) => void;
 
 	// === Worktree tracking ===
 
@@ -200,7 +183,7 @@ export const useSessionStore = create<SessionStore>()((set) => ({
 	setActiveSessionIdInternal: (v) =>
 		set((s) => ({ activeSessionId: resolve(v, s.activeSessionId) })),
 
-	// Groups
+	// Groups (legacy — retained for migration consumers)
 	setGroups: (v) =>
 		set((s) => {
 			const newGroups = resolve(v, s.groups);
@@ -208,46 +191,10 @@ export const useSessionStore = create<SessionStore>()((set) => ({
 			return { groups: newGroups };
 		}),
 
-	addGroup: (group) => set((s) => ({ groups: [...s.groups, group] })),
-
-	removeGroup: (id) =>
-		set((s) => {
-			const filtered = s.groups.filter((g) => g.id !== id);
-			if (filtered.length === s.groups.length) return s;
-			return { groups: filtered };
-		}),
-
-	updateGroup: (id, updates) =>
-		set((s) => {
-			let found = false;
-			const newGroups = s.groups.map((g) => {
-				if (g.id === id) {
-					found = true;
-					return { ...g, ...updates };
-				}
-				return g;
-			});
-			if (!found) return s;
-			return { groups: newGroups };
-		}),
-
-	toggleGroupCollapsed: (id) =>
-		set((s) => ({
-			groups: s.groups.map((g) => (g.id === id ? { ...g, collapsed: !g.collapsed } : g)),
-		})),
-
 	// Initialization
 	setSessionsLoaded: (v) => set((s) => ({ sessionsLoaded: resolve(v, s.sessionsLoaded) })),
 	setInitialLoadComplete: (v) =>
 		set((s) => ({ initialLoadComplete: resolve(v, s.initialLoadComplete) })),
-
-	// Bookmarks
-	toggleBookmark: (sessionId) =>
-		set((s) => ({
-			sessions: s.sessions.map((session) =>
-				session.id === sessionId ? { ...session, bookmarked: !session.bookmarked } : session
-			),
-		})),
 
 	// Worktree tracking
 	addRemovedWorktreePath: (path) =>
@@ -331,35 +278,6 @@ export const selectSessionById =
 		state.sessions.find((s) => s.id === id);
 
 /**
- * Select all bookmarked sessions.
- *
- * @example
- * const bookmarked = useSessionStore(selectBookmarkedSessions);
- */
-export const selectBookmarkedSessions = (state: SessionStore): Session[] =>
-	state.sessions.filter((s) => s.bookmarked);
-
-/**
- * Select sessions belonging to a specific group.
- *
- * @example
- * const groupSessions = useSessionStore(selectSessionsByGroup('group-1'));
- */
-export const selectSessionsByGroup =
-	(groupId: string) =>
-	(state: SessionStore): Session[] =>
-		state.sessions.filter((s) => s.groupId === groupId);
-
-/**
- * Select ungrouped sessions (no groupId set).
- *
- * @example
- * const ungrouped = useSessionStore(selectUngroupedSessions);
- */
-export const selectUngroupedSessions = (state: SessionStore): Session[] =>
-	state.sessions.filter((s) => !s.groupId && !s.parentSessionId);
-
-/**
  * Select sessions belonging to a specific project.
  *
  * @example
@@ -369,17 +287,6 @@ export const selectSessionsByProject =
 	(projectId: string) =>
 	(state: SessionStore): Session[] =>
 		state.sessions.filter((s) => s.projectId === projectId);
-
-/**
- * Select a group by ID.
- *
- * @example
- * const group = useSessionStore(selectGroupById('group-1'));
- */
-export const selectGroupById =
-	(id: string) =>
-	(state: SessionStore): Group | undefined =>
-		state.groups.find((g) => g.id === id);
 
 /**
  * Select session count.
@@ -439,13 +346,8 @@ export function getSessionActions() {
 		setActiveSessionId: state.setActiveSessionId,
 		setActiveSessionIdInternal: state.setActiveSessionIdInternal,
 		setGroups: state.setGroups,
-		addGroup: state.addGroup,
-		removeGroup: state.removeGroup,
-		updateGroup: state.updateGroup,
-		toggleGroupCollapsed: state.toggleGroupCollapsed,
 		setSessionsLoaded: state.setSessionsLoaded,
 		setInitialLoadComplete: state.setInitialLoadComplete,
-		toggleBookmark: state.toggleBookmark,
 		addRemovedWorktreePath: state.addRemovedWorktreePath,
 		setRemovedWorktreePaths: state.setRemovedWorktreePaths,
 		setCyclePosition: state.setCyclePosition,
