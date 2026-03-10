@@ -31,6 +31,7 @@ AI agents pay a token cost for every line loaded. This codebase uses tiered docu
 | `.claude/memory/features.md` | Usage Dashboard or Document Graph |
 | `.claude/memory/pitfalls.md` | Debugging UI or state issues |
 | `.claude/memory/build-deploy.md` | Build system, CI/CD, scripts |
+| `.claude/memory/navigation.md` | Project-centric sidebar, inbox system, project restoration |
 
 ### Deep References (CLAUDE-*.md)
 
@@ -93,12 +94,18 @@ Use "agent" in user-facing language. Reserve "session" for provider-level conver
 
 ### UI Components
 
-- **Left Bar** - Left sidebar with agent list and groups (`SessionList.tsx`)
+- **Left Bar** - Left sidebar with project list and inbox (`ProjectSidebar.tsx`). Legacy `SessionList.tsx` still exists but is no longer wired into `App.tsx`.
 - **Right Bar** - Right sidebar with Files, History, Auto Run tabs (`RightPanel.tsx`)
 - **Main Window** - Center workspace (`MainPanel.tsx`)
   - **AI Terminal** - Main window in AI mode (interacting with AI agents)
   - **Command Terminal** - Main window in terminal/shell mode
   - **System Log Viewer** - Special view for system logs (`LogViewer.tsx`)
+
+### Navigation Model
+
+Maestro uses **project-centric navigation**: the left sidebar lists projects (repos), and selecting one scopes the tab bar to that project's sessions. An **Inbox** section at the top of the sidebar surfaces sessions that need attention (finished, errored, or waiting for input). Clicking an inbox item navigates to the project + session and auto-dismisses.
+
+Key stores: `projectStore` (projects, activeProjectId), `inboxStore` (attention items), `sessionStore` (sessions with `projectId` field).
 
 ### Agent States (color-coded)
 
@@ -136,7 +143,8 @@ See [[CLAUDE-AGENTS.md]] for capabilities and integration details.
 ## Quick Commands
 
 ```bash
-npm run dev           # Development with hot reload (isolated data, can run alongside production)
+npm run dev           # Development with hot reload (Unix/macOS only)
+npm run dev:win       # Development with hot reload (Windows — use this from VSCode/Claude Code)
 npm run dev:prod-data # Development using production data (close production app first)
 npm run dev:web       # Web interface development
 npm run build         # Full production build
@@ -147,6 +155,25 @@ npm run package       # Package for all platforms
 npm run test          # Run test suite
 npm run test:watch    # Run tests in watch mode
 ```
+
+### Launching on Windows (Important)
+
+**`npm run dev` does not work on Windows** — it uses Unix-style `NODE_ENV=development` syntax.
+
+Use `npm run dev:win` instead, which runs `scripts/start-dev.ps1`. This opens two PowerShell windows (renderer + main) and handles environment variables correctly.
+
+**ELECTRON_RUN_AS_NODE pitfall:** VSCode and Claude Code set `ELECTRON_RUN_AS_NODE=1` in their child process environment. This tells Electron to run as plain Node.js, which breaks `require('electron')` (returns a path string instead of the built-in module). The `start-dev.ps1` script clears this variable automatically. If launching Electron manually from a VSCode/Claude Code terminal, you must unset it first:
+
+```bash
+# Bash (Git Bash / WSL)
+unset ELECTRON_RUN_AS_NODE && NODE_ENV=development node_modules/electron/dist/electron.exe .
+
+# PowerShell
+Remove-Item Env:ELECTRON_RUN_AS_NODE -ErrorAction SilentlyContinue
+$env:NODE_ENV='development'; npx electron .
+```
+
+Make sure the Vite dev server is running on port 5173 first (`npm run dev:renderer`).
 
 ---
 
@@ -230,6 +257,9 @@ src/
 | Add Director's Notes feature | `src/renderer/components/DirectorNotes/`, `src/main/ipc/handlers/director-notes.ts`                                                   |
 | Add Encore Feature           | `src/renderer/types/index.ts` (flag), `useSettings.ts` (state), `SettingsModal.tsx` (toggle UI), gate in `App.tsx` + keyboard handler |
 | Modify history components    | `src/renderer/components/History/`                                                                                                    |
+| Modify project sidebar       | `src/renderer/components/ProjectSidebar/`, `src/renderer/stores/projectStore.ts`                                                      |
+| Add inbox trigger            | `src/renderer/stores/inboxStore.ts`, `src/renderer/hooks/useInboxWatcher.ts`                                                          |
+| Modify project persistence   | `src/main/ipc/handlers/persistence.ts` (`projects:getAll`, `projects:setAll`), `src/main/preload.ts`                                  |
 
 ---
 
