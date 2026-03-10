@@ -505,6 +505,7 @@ export type ClosedTabEntry =
 export interface Session {
 	id: string;
 	groupId?: string;
+	projectId?: string;      // Links to Project. Optional during migration period.
 	name: string;
 	toolType: ToolType;
 	state: SessionState;
@@ -935,4 +936,18 @@ export interface ContextManagementSettings {
 	contextWarningsEnabled: boolean; // Enable context consumption warnings (default: false)
 	contextWarningYellowThreshold: number; // Yellow warning threshold percentage (default: 60)
 	contextWarningRedThreshold: number; // Red warning threshold percentage (default: 80)
+}
+
+export type InboxReason = 'finished' | 'error' | 'waiting_input';
+
+export interface InboxItem {
+	id: string;
+	sessionId: string;
+	tabId: string;
+	projectId: string;
+	reason: InboxReason;
+	agentType: ToolType;
+	tabName: string;
+	projectName: string;
+	timestamp: number;
 }

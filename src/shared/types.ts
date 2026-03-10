@@ -19,6 +19,16 @@ export interface Group {
 	collapsed: boolean;
 }
 
+// Project — represents a git repository that sessions belong to
+export interface Project {
+	id: string;
+	name: string;
+	repoPath: string;
+	createdAt: number;
+	color?: string;
+	collapsed?: boolean;
+}
+
 // Simplified session interface for CLI (subset of full Session)
 export interface SessionInfo {
 	id: string;
