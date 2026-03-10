@@ -46,6 +46,7 @@ import type {
 	Session,
 	Theme,
 	BatchRunState,
+	AITab,
 	UnifiedTab,
 	FilePreviewTab,
 	ThinkingItem,
@@ -161,6 +162,16 @@ interface MainPanelProps {
 	// Auto mode props
 	currentSessionBatchState?: BatchRunState | null; // For current session only (input highlighting)
 	onStopBatchRun?: (sessionId?: string) => void;
+
+	// Session-level tab bar (project-scoped: one tab per agent in the project)
+	sessionTabs?: AITab[];
+	activeSessionTabId?: string;
+	onSessionTabSelect?: (id: string) => void;
+	onSessionTabClose?: (id: string) => void;
+	onSessionTabNew?: () => void;
+	onSessionTabReorder?: (from: number, to: number) => void;
+	onSessionTabRename?: (id: string) => void;
+	onSessionTabStar?: (id: string, starred: boolean) => void;
 
 	// Tab management for AI sessions
 	onTabSelect?: (tabId: string) => void;
@@ -451,6 +462,16 @@ export const MainPanel = React.memo(
 
 		// Extract tab handlers from props
 		const {
+			// Session-level tab bar (project-scoped)
+			sessionTabs,
+			activeSessionTabId,
+			onSessionTabSelect,
+			onSessionTabClose,
+			onSessionTabNew,
+			onSessionTabReorder,
+			onSessionTabRename,
+			onSessionTabStar,
+			// AI conversation tab handlers
 			onTabSelect,
 			onTabClose,
 			onNewTab,
@@ -1451,48 +1472,65 @@ export const MainPanel = React.memo(
 							</div>
 						)}
 
-						{/* Tab Bar - always shown in AI mode when we have tabs (includes both AI and file tabs) */}
+						{/* Tab Bar - session-level (project-scoped) or AI conversation tabs */}
 						{activeSession.inputMode === 'ai' &&
-							activeSession.aiTabs &&
-							activeSession.aiTabs.length > 0 &&
-							onTabSelect &&
-							onTabClose &&
-							onNewTab && (
-								<TabBar
-									tabs={activeSession.aiTabs}
-									activeTabId={activeSession.activeTabId}
-									theme={theme}
-									onTabSelect={onTabSelect}
-									onTabClose={onTabClose}
-									onNewTab={onNewTab}
-									onRequestRename={onRequestTabRename}
-									onTabReorder={onTabReorder}
-									onUnifiedTabReorder={onUnifiedTabReorder}
-									onTabStar={onTabStar}
-									onTabMarkUnread={onTabMarkUnread}
-									onMergeWith={onMergeWith}
-									onSendToAgent={onSendToAgent}
-									onSummarizeAndContinue={onSummarizeAndContinue}
-									onCopyContext={onCopyContext}
-									onExportHtml={onExportHtml}
-									onPublishGist={props.onPublishTabGist}
-									ghCliAvailable={props.ghCliAvailable}
-									showUnreadOnly={showUnreadOnly}
-									onToggleUnreadFilter={onToggleUnreadFilter}
-									onOpenTabSearch={onOpenTabSearch}
-									onCloseAllTabs={onCloseAllTabs}
-									onCloseOtherTabs={onCloseOtherTabs}
-									onCloseTabsLeft={onCloseTabsLeft}
-									onCloseTabsRight={onCloseTabsRight}
-									// Unified tab system props (Phase 4)
-									unifiedTabs={unifiedTabs}
-									activeFileTabId={activeFileTabId}
-									onFileTabSelect={onFileTabSelect}
-									onFileTabClose={onFileTabClose}
-									// Accessibility
-									colorBlindMode={colorBlindMode}
-								/>
-							)}
+							(sessionTabs
+								? sessionTabs.length > 0 &&
+									onSessionTabSelect &&
+									onSessionTabClose &&
+									onSessionTabNew && (
+										<TabBar
+											tabs={sessionTabs}
+											activeTabId={activeSessionTabId ?? activeSession.id}
+											theme={theme}
+											onTabSelect={onSessionTabSelect}
+											onTabClose={onSessionTabClose}
+											onNewTab={onSessionTabNew}
+											onRequestRename={onSessionTabRename}
+											onTabReorder={onSessionTabReorder}
+											onTabStar={onSessionTabStar}
+											ghCliAvailable={props.ghCliAvailable}
+											colorBlindMode={colorBlindMode}
+										/>
+									)
+								: activeSession.aiTabs &&
+									activeSession.aiTabs.length > 0 &&
+									onTabSelect &&
+									onTabClose &&
+									onNewTab && (
+										<TabBar
+											tabs={activeSession.aiTabs}
+											activeTabId={activeSession.activeTabId}
+											theme={theme}
+											onTabSelect={onTabSelect}
+											onTabClose={onTabClose}
+											onNewTab={onNewTab}
+											onRequestRename={onRequestTabRename}
+											onTabReorder={onTabReorder}
+											onUnifiedTabReorder={onUnifiedTabReorder}
+											onTabStar={onTabStar}
+											onTabMarkUnread={onTabMarkUnread}
+											onMergeWith={onMergeWith}
+											onSendToAgent={onSendToAgent}
+											onSummarizeAndContinue={onSummarizeAndContinue}
+											onCopyContext={onCopyContext}
+											onExportHtml={onExportHtml}
+											onPublishGist={props.onPublishTabGist}
+											ghCliAvailable={props.ghCliAvailable}
+											showUnreadOnly={showUnreadOnly}
+											onToggleUnreadFilter={onToggleUnreadFilter}
+											onOpenTabSearch={onOpenTabSearch}
+											onCloseAllTabs={onCloseAllTabs}
+											onCloseOtherTabs={onCloseOtherTabs}
+											onCloseTabsLeft={onCloseTabsLeft}
+											onCloseTabsRight={onCloseTabsRight}
+											unifiedTabs={unifiedTabs}
+											activeFileTabId={activeFileTabId}
+											onFileTabSelect={onFileTabSelect}
+											onFileTabClose={onFileTabClose}
+											colorBlindMode={colorBlindMode}
+										/>
+									))}
 
 						{/* Agent Error Banner */}
 						{activeTabError && (

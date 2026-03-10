@@ -134,6 +134,7 @@ import {
 	useLiveMode,
 } from './hooks';
 import { useMainPanelProps, useSessionListProps, useRightPanelProps } from './hooks/props';
+import { useSessionTabs } from './hooks/tabs/useSessionTabs';
 import { useAgentListeners } from './hooks/agent/useAgentListeners';
 import { useSymphonyContribution } from './hooks/symphony/useSymphonyContribution';
 import { useProjectRestoration } from './hooks/project/useProjectRestoration';
@@ -1878,6 +1879,18 @@ function MaestroConsoleInner() {
 		inputRef,
 	});
 
+	// Session-level tabs (project-scoped: one tab per agent in the project)
+	const {
+		sessionTabs,
+		activeSessionTabId,
+		handleSessionTabSelect,
+		handleSessionTabClose,
+		handleSessionTabNew,
+		handleSessionTabReorder,
+		handleSessionTabRename,
+		handleSessionTabStar,
+	} = useSessionTabs();
+
 	// Update keyboardHandlerRef synchronously during render (before effects run)
 	// This must be placed after all handler functions and state are defined to avoid TDZ errors
 	// The ref is provided by useMainKeyboardHandler hook
@@ -2046,6 +2059,13 @@ function MaestroConsoleInner() {
 
 		// Project management
 		handleAddProject,
+
+		// Session-level tab bar handlers (project-scoped)
+		sessionTabs,
+		handleSessionTabSelect,
+		handleSessionTabClose,
+		handleSessionTabNew,
+		handleSessionTabReorder,
 	};
 
 	// NOTE: File explorer effects (flat file list, pending jump path, scroll, keyboard nav) are
@@ -2187,6 +2207,16 @@ function MaestroConsoleInner() {
 		handleDeleteLog,
 		handleRemoveQueuedItem,
 		handleOpenQueueBrowser,
+
+		// Session-level tab bar (project-scoped)
+		sessionTabs,
+		activeSessionTabId,
+		handleSessionTabSelect,
+		handleSessionTabClose,
+		handleSessionTabNew,
+		handleSessionTabReorder,
+		handleSessionTabRename,
+		handleSessionTabStar,
 
 		// Tab management handlers
 		handleTabSelect,

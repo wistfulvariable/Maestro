@@ -570,6 +570,66 @@ export function useMainKeyboardHandler(): UseMainKeyboardHandlerReturn {
 				ctx.activeSession?.aiTabs &&
 				!ctx.activeGroupChatId
 			) {
+				// --- Session-level tab shortcuts (project-scoped) ---
+				// When session tabs are active, Cmd+T/W and tab navigation operate on sessions
+				if (ctx.sessionTabs) {
+					if (ctx.isTabShortcut(e, 'newTab')) {
+						e.preventDefault();
+						ctx.handleSessionTabNew?.();
+						trackShortcut('newTab');
+					}
+					if (ctx.isTabShortcut(e, 'closeTab')) {
+						e.preventDefault();
+						ctx.handleSessionTabClose?.(ctx.activeSessionId);
+						trackShortcut('closeTab');
+					}
+					if (ctx.isTabShortcut(e, 'nextTab')) {
+						e.preventDefault();
+						const currentIndex = ctx.sessionTabs.findIndex(
+							(t: AITab) => t.id === ctx.activeSessionId
+						);
+						if (ctx.sessionTabs.length > 0) {
+							const nextIndex = (currentIndex + 1) % ctx.sessionTabs.length;
+							ctx.handleSessionTabSelect?.(ctx.sessionTabs[nextIndex].id);
+						}
+						trackShortcut('nextTab');
+					}
+					if (ctx.isTabShortcut(e, 'prevTab')) {
+						e.preventDefault();
+						const currentIndex = ctx.sessionTabs.findIndex(
+							(t: AITab) => t.id === ctx.activeSessionId
+						);
+						if (ctx.sessionTabs.length > 0) {
+							const prevIndex =
+								(currentIndex - 1 + ctx.sessionTabs.length) % ctx.sessionTabs.length;
+							ctx.handleSessionTabSelect?.(ctx.sessionTabs[prevIndex].id);
+						}
+						trackShortcut('prevTab');
+					}
+					if (!ctx.showUnreadOnly) {
+						for (let i = 1; i <= 9; i++) {
+							if (ctx.isTabShortcut(e, `goToTab${i}`)) {
+								e.preventDefault();
+								if (i - 1 < ctx.sessionTabs.length) {
+									ctx.handleSessionTabSelect?.(ctx.sessionTabs[i - 1].id);
+								}
+								trackShortcut(`goToTab${i}`);
+								break;
+							}
+						}
+						if (ctx.isTabShortcut(e, 'goToLastTab')) {
+							e.preventDefault();
+							if (ctx.sessionTabs.length > 0) {
+								ctx.handleSessionTabSelect?.(
+									ctx.sessionTabs[ctx.sessionTabs.length - 1].id
+								);
+							}
+							trackShortcut('goToLastTab');
+						}
+					}
+					// Skip the rest of the AI-tab-level shortcuts when session tabs are active
+				} else {
+				// --- AI conversation tab shortcuts (original behavior) ---
 				if (ctx.isTabShortcut(e, 'tabSwitcher')) {
 					e.preventDefault();
 					ctx.setTabSwitcherOpen(true);
@@ -819,6 +879,7 @@ export function useMainKeyboardHandler(): UseMainKeyboardHandlerReturn {
 						trackShortcut('goToLastTab');
 					}
 				}
+				} // end else (AI conversation tab shortcuts)
 			}
 
 			// Cmd+F contextual shortcuts - track based on current focus/context

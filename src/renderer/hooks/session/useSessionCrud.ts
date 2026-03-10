@@ -19,6 +19,7 @@ import type { ToolType, Session, AITab } from '../../types';
 import { useSessionStore } from '../../stores/sessionStore';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { useUIStore } from '../../stores/uiStore';
+import { useProjectStore } from '../../stores/projectStore';
 import { getModalActions } from '../../stores/modalStore';
 import { notifyToast } from '../../stores/notificationStore';
 import { generateId } from '../../utils/ids';
@@ -207,6 +208,7 @@ export function useSessionCrud(deps: UseSessionCrudDeps): UseSessionCrudReturn {
 					id: newId,
 					name,
 					toolType: agentId as ToolType,
+					projectId: useProjectStore.getState().activeProjectId || undefined,
 					state: 'idle',
 					cwd: workingDir,
 					fullPath: workingDir,
