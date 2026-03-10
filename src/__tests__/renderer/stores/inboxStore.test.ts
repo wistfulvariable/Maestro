@@ -109,15 +109,16 @@ describe('inboxStore', () => {
 	});
 
 	describe('selectors', () => {
-		it('selectInboxItems returns items sorted newest first', () => {
-			const items = [
-				createMockInboxItem({ id: 'i1', timestamp: 1000 }),
-				createMockInboxItem({ id: 'i2', sessionId: 's2', timestamp: 2000 }),
-			];
-			useInboxStore.setState({ items });
-			const sorted = selectInboxItems(useInboxStore.getState());
-			expect(sorted[0].id).toBe('i2');
-			expect(sorted[1].id).toBe('i1');
+		it('selectInboxItems returns items newest first (pre-sorted by addItem)', () => {
+			// addItem prepends (newest first), so adding older then newer
+			// results in newest at index 0
+			const { addItem } = useInboxStore.getState();
+			addItem(createMockInboxItem({ id: 'i1', timestamp: 1000 }));
+			addItem(createMockInboxItem({ id: 'i2', sessionId: 's2', timestamp: 2000 }));
+
+			const items = selectInboxItems(useInboxStore.getState());
+			expect(items[0].id).toBe('i2');
+			expect(items[1].id).toBe('i1');
 		});
 
 		it('selectInboxCount returns item count', () => {

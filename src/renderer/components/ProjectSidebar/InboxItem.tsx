@@ -14,11 +14,18 @@ interface InboxItemProps {
 	onNavigate: (item: InboxItemType) => void;
 }
 
-const REASON_CONFIG = {
-	finished: { icon: '\u25CF', color: '#22c55e', label: 'Finished' },
-	error: { icon: '\u25CF', color: '#ef4444', label: 'Error' },
-	waiting_input: { icon: '\u25CF', color: '#eab308', label: 'Waiting' },
+const REASON_LABELS = {
+	finished: 'Finished',
+	error: 'Error',
+	waiting_input: 'Waiting',
 } as const;
+
+/** Map reason to theme color key */
+const REASON_COLOR_KEY = {
+	finished: 'success',
+	error: 'error',
+	waiting_input: 'warning',
+} as const satisfies Record<string, keyof Theme['colors']>;
 
 function formatRelativeTime(timestamp: number): string {
 	const diff = Date.now() - timestamp;
@@ -35,7 +42,7 @@ export const InboxItemComponent = React.memo(function InboxItemComponent({
 	theme,
 	onNavigate,
 }: InboxItemProps) {
-	const config = REASON_CONFIG[item.reason];
+	const reasonColor = theme.colors[REASON_COLOR_KEY[item.reason]];
 
 	const handleClick = useCallback(() => {
 		onNavigate(item);
@@ -64,7 +71,7 @@ export const InboxItemComponent = React.memo(function InboxItemComponent({
 				e.currentTarget.style.backgroundColor = 'transparent';
 			}}
 		>
-			<span style={{ color: config.color, fontSize: 10, flexShrink: 0 }}>{config.icon}</span>
+			<span style={{ color: reasonColor, fontSize: 10, flexShrink: 0 }}>{'\u25CF'}</span>
 			<div style={{ flex: 1, minWidth: 0 }}>
 				<div
 					style={{

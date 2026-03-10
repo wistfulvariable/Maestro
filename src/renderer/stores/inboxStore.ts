@@ -40,7 +40,8 @@ export const useInboxStore = create<InboxStore>()((set) => ({
 				(existing) => existing.sessionId === item.sessionId && existing.reason === item.reason
 			);
 			if (exists) return s;
-			return { items: [...s.items, item] };
+			// Insert at beginning (newest first) so items are pre-sorted
+			return { items: [item, ...s.items] };
 		}),
 
 	dismissItem: (itemId) =>
@@ -71,8 +72,8 @@ export const useInboxStore = create<InboxStore>()((set) => ({
 // Selectors
 // ============================================================================
 
-export const selectInboxItems = (state: InboxStore): InboxItem[] =>
-	[...state.items].sort((a, b) => b.timestamp - a.timestamp);
+/** Items are stored newest-first (pre-sorted by addItem) */
+export const selectInboxItems = (state: InboxStore): InboxItem[] => state.items;
 
 export const selectInboxCount = (state: InboxStore): number => state.items.length;
 
