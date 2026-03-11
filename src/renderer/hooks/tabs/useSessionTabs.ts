@@ -8,7 +8,7 @@
  */
 
 import { useMemo, useCallback } from 'react';
-import type { AITab } from '../../types';
+import type { AITab, Session } from '../../types';
 import { useSessionStore } from '../../stores/sessionStore';
 import { useProjectStore } from '../../stores/projectStore';
 import { getModalActions } from '../../stores/modalStore';
@@ -19,6 +19,8 @@ import { mapSessionsToTabs } from '../../utils/sessionToTab';
 // ============================================================================
 
 export interface UseSessionTabsReturn {
+	/** Raw sessions filtered to the active project */
+	projectSessions: Session[];
 	/** Sessions mapped to AITab[] for the TabBar (filtered to active project) */
 	sessionTabs: AITab[];
 	/** The active session ID (used as TabBar's activeTabId) */
@@ -122,6 +124,7 @@ export function useSessionTabs(): UseSessionTabsReturn {
 	}, []);
 
 	return {
+		projectSessions,
 		sessionTabs,
 		activeSessionTabId: activeSessionId,
 		handleSessionTabSelect,

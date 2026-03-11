@@ -411,7 +411,7 @@ export const useSettingsStore = create<SettingsStore>()((set, get) => ({
 	enterToSendTerminal: true,
 	defaultSaveToHistory: true,
 	defaultShowThinking: 'off',
-	leftSidebarWidth: 256,
+	leftSidebarWidth: 420,
 	rightPanelWidth: 384,
 	markdownEditMode: false,
 	chatRawTextMode: false,
@@ -566,7 +566,7 @@ export const useSettingsStore = create<SettingsStore>()((set, get) => ({
 	},
 
 	setLeftSidebarWidth: (value) => {
-		const clamped = Math.max(256, Math.min(600, value));
+		const clamped = Math.max(360, Math.min(600, value));
 		set({ leftSidebarWidth: clamped });
 		window.maestro.settings.set('leftSidebarWidth', clamped);
 	},
@@ -1383,7 +1383,7 @@ export async function loadAllSettings(): Promise<void> {
 		// leftSidebarWidth: clamp on load
 		if (allSettings['leftSidebarWidth'] !== undefined)
 			patch.leftSidebarWidth = Math.max(
-				256,
+				360,
 				Math.min(600, allSettings['leftSidebarWidth'] as number)
 			);
 

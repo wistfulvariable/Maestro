@@ -103,9 +103,9 @@ Use "agent" in user-facing language. Reserve "session" for provider-level conver
 
 ### Navigation Model
 
-Maestro uses **project-centric navigation**: the left sidebar lists projects (repos), and selecting one scopes the tab bar to that project's sessions (one tab per agent). AI conversation tabs within a session are hidden — each session shows its active conversation. An **Inbox** section at the top of the sidebar surfaces sessions that need attention (finished, errored, or waiting for input). Clicking an inbox item navigates to the project + session and auto-dismisses.
+Maestro uses **project-centric navigation** with a **two-column left sidebar**: Column 1 (`ProjectSidebar`, 180px) lists projects and inbox; Column 2 (`SessionSidebar`, flex) shows sessions for the active project. Selecting a session switches the main panel. The **TabBar** shows AI conversation tabs within the active session (not sessions). An **Inbox** section surfaces sessions needing attention (finished, errored, waiting for input). The sidebar is resizable (setting `leftSidebarWidth`, default 420px).
 
-Key stores: `projectStore` (projects, activeProjectId), `inboxStore` (attention items), `sessionStore` (sessions with `projectId` field). Session→tab mapping: `sessionToTab.ts`, `useSessionTabs.ts`.
+Key stores: `projectStore` (projects, activeProjectId), `inboxStore` (attention items), `sessionStore` (sessions with `projectId` field). Session filtering: `useSessionTabs.ts`.
 
 ### Agent States (color-coded)
 
@@ -259,7 +259,7 @@ src/
 | Add Encore Feature           | `src/renderer/types/index.ts` (flag), `useSettings.ts` (state), `SettingsModal.tsx` (toggle UI), gate in `App.tsx` + keyboard handler    |
 | Modify history components    | `src/renderer/components/History/`                                                                                                       |
 | Modify project sidebar       | `src/renderer/components/ProjectSidebar/`, `src/renderer/stores/projectStore.ts`                                                         |
-| Modify session tab bar       | `src/renderer/utils/sessionToTab.ts`, `src/renderer/hooks/tabs/useSessionTabs.ts`, `MainPanel.tsx`                                       |
+| Modify session sidebar       | `src/renderer/components/SessionSidebar/`, `src/renderer/hooks/tabs/useSessionTabs.ts`                                                   |
 | Add inbox trigger            | `src/renderer/stores/inboxStore.ts`, `src/renderer/hooks/useInboxWatcher.ts`                                                             |
 | Modify project persistence   | `src/main/ipc/handlers/persistence.ts` (`projects:getAll`, `projects:setAll`), `src/main/preload.ts`                                     |
 

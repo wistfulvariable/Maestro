@@ -22,6 +22,7 @@ import { TourOverlay } from './components/Wizard/tour';
 import { EmptyStateView } from './components/EmptyStateView';
 import { DeleteAgentConfirmModal } from './components/DeleteAgentConfirmModal';
 import { ProjectSidebar } from './components/ProjectSidebar';
+import { SessionSidebar } from './components/SessionSidebar';
 
 // Lazy-loaded components for performance (rarely-used heavy modals)
 // These are loaded on-demand when the user first opens them
@@ -132,6 +133,8 @@ import {
 	useInputMode,
 	// Live mode management (Tier 3B)
 	useLiveMode,
+	// Resizable panel (drag-to-resize)
+	useResizablePanel,
 } from './hooks';
 import { useMainPanelProps, useSessionListProps, useRightPanelProps } from './hooks/props';
 import { useSessionTabs } from './hooks/tabs/useSessionTabs';
@@ -419,6 +422,8 @@ function MaestroConsoleInner() {
 		setAutoScrollAiMode,
 		setSuppressWindowsWarning,
 		encoreFeatures,
+		leftSidebarWidth,
+		setLeftSidebarWidth,
 	} = settings;
 
 	// --- KEYBOARD SHORTCUT HELPERS ---
@@ -739,6 +744,17 @@ function MaestroConsoleInner() {
 	>(null);
 	// Ref for handleResumeSession - bridges ordering gap between useModalHandlers and useAgentSessionManagement
 	const handleResumeSessionRef = useRef<((agentSessionId: string) => void) | null>(null);
+
+	// --- LEFT SIDEBAR RESIZE ---
+	const { onResizeStart: onSidebarResizeStart } = useResizablePanel({
+		width: leftSidebarWidth,
+		minWidth: 360,
+		maxWidth: 600,
+		settingsKey: 'leftSidebarWidth',
+		setWidth: setLeftSidebarWidth,
+		side: 'left',
+		externalRef: sidebarContainerRef as React.RefObject<HTMLDivElement>,
+	});
 
 	// Note: thinkingChunkBufferRef and thinkingChunkRafIdRef moved into useAgentListeners hook
 	// Note: pauseBatchOnErrorRef and getBatchStateRef moved into useBatchHandlers hook
@@ -1881,6 +1897,7 @@ function MaestroConsoleInner() {
 
 	// Session-level tabs (project-scoped: one tab per agent in the project)
 	const {
+		projectSessions,
 		sessionTabs,
 		activeSessionTabId,
 		handleSessionTabSelect,
@@ -2208,16 +2225,6 @@ function MaestroConsoleInner() {
 		handleRemoveQueuedItem,
 		handleOpenQueueBrowser,
 
-		// Session-level tab bar (project-scoped)
-		sessionTabs,
-		activeSessionTabId,
-		handleSessionTabSelect,
-		handleSessionTabClose,
-		handleSessionTabNew,
-		handleSessionTabReorder,
-		handleSessionTabRename,
-		handleSessionTabStar,
-
 		// Tab management handlers
 		handleTabSelect,
 		handleTabClose,
@@ -2309,7 +2316,6 @@ function MaestroConsoleInner() {
 		// Helper functions
 		getActiveTab,
 	});
-	// @ts-expect-error -- sessionListProps temporarily unused while ProjectSidebar replaces SessionList
 	const _sessionListProps = useSessionListProps({
 		// Theme (computed externally from settingsStore + themeId)
 		theme,
@@ -3044,11 +3050,71 @@ function MaestroConsoleInner() {
 					/>
 				) : null}
 
-				{/* --- LEFT SIDEBAR (hidden in mobile landscape and when no sessions) --- */}
+				{/* --- LEFT SIDEBAR: Two-column layout (hidden in mobile landscape and when no sessions) --- */}
 				{!isMobileLandscape && sessions.length > 0 && (
-					<ErrorBoundary>
-						<ProjectSidebar theme={theme} onAddProject={handleAddProject} />
-					</ErrorBoundary>
+					<div
+						ref={sidebarContainerRef}
+						style={{
+							display: 'flex',
+							flexDirection: 'row',
+							height: '100%',
+							flexShrink: 0,
+							width: leftSidebarOpen ? `${leftSidebarWidth}px` : '0px',
+							overflow: 'hidden',
+							position: 'relative',
+						}}
+					>
+						{/* Column 1: Projects + Inbox */}
+						<div
+							style={{
+								width: 180,
+								flexShrink: 0,
+								borderRight: `1px solid ${theme.colors.border}`,
+								height: '100%',
+								overflow: 'hidden',
+							}}
+						>
+							<ErrorBoundary>
+								<ProjectSidebar theme={theme} onAddProject={handleAddProject} />
+							</ErrorBoundary>
+						</div>
+						{/* Column 2: Sessions for active project */}
+						<div
+							style={{
+								flex: 1,
+								minWidth: 0,
+								height: '100%',
+								overflow: 'hidden',
+								borderRight: `1px solid ${theme.colors.border}`,
+							}}
+						>
+							<ErrorBoundary>
+								<SessionSidebar
+									theme={theme}
+									sessions={projectSessions}
+									activeSessionId={activeSessionId}
+									onSessionSelect={handleSessionTabSelect}
+									onSessionClose={handleSessionTabClose}
+									onNewSession={handleSessionTabNew}
+								/>
+							</ErrorBoundary>
+						</div>
+						{/* Resize handle */}
+						{leftSidebarOpen && (
+							<div
+								style={{
+									position: 'absolute',
+									top: 0,
+									right: 0,
+									width: 3,
+									height: '100%',
+									cursor: 'col-resize',
+									zIndex: 20,
+								}}
+								onMouseDown={onSidebarResizeStart}
+							/>
+						)}
+					</div>
 				)}
 
 				{/* --- SYSTEM LOG VIEWER (replaces center content when open, lazy-loaded) --- */}

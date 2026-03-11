@@ -160,16 +160,6 @@ export interface UseMainPanelPropsDeps {
 	handleRemoveQueuedItem: (itemId: string) => void;
 	handleOpenQueueBrowser: () => void;
 
-	// Session-level tab bar (project-scoped)
-	sessionTabs?: AITab[];
-	activeSessionTabId?: string;
-	handleSessionTabSelect?: (id: string) => void;
-	handleSessionTabClose?: (id: string) => void;
-	handleSessionTabNew?: () => void;
-	handleSessionTabReorder?: (from: number, to: number) => void;
-	handleSessionTabRename?: (id: string) => void;
-	handleSessionTabStar?: (id: string, starred: boolean) => void;
-
 	// Tab management handlers
 	handleTabSelect: (tabId: string) => void;
 	handleTabClose: (tabId: string) => void;
@@ -355,14 +345,6 @@ export function useMainPanelProps(deps: UseMainPanelPropsDeps) {
 			onRemoveQueuedItem: deps.handleRemoveQueuedItem,
 			onOpenQueueBrowser: deps.handleOpenQueueBrowser,
 			// Session-level tab bar (project-scoped)
-			sessionTabs: deps.sessionTabs,
-			activeSessionTabId: deps.activeSessionTabId,
-			onSessionTabSelect: deps.handleSessionTabSelect,
-			onSessionTabClose: deps.handleSessionTabClose,
-			onSessionTabNew: deps.handleSessionTabNew,
-			onSessionTabReorder: deps.handleSessionTabReorder,
-			onSessionTabRename: deps.handleSessionTabRename,
-			onSessionTabStar: deps.handleSessionTabStar,
 			// Tab management handlers
 			onTabSelect: deps.handleTabSelect,
 			onTabClose: deps.handleTabClose,
@@ -564,14 +546,6 @@ export function useMainPanelProps(deps: UseMainPanelPropsDeps) {
 			deps.handleDeleteLog,
 			deps.handleRemoveQueuedItem,
 			deps.handleOpenQueueBrowser,
-			deps.sessionTabs,
-			deps.activeSessionTabId,
-			deps.handleSessionTabSelect,
-			deps.handleSessionTabClose,
-			deps.handleSessionTabNew,
-			deps.handleSessionTabReorder,
-			deps.handleSessionTabRename,
-			deps.handleSessionTabStar,
 			deps.handleTabSelect,
 			deps.handleTabClose,
 			deps.handleNewTab,
