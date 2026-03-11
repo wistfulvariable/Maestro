@@ -17,7 +17,7 @@ The command palette is your gateway to nearly every action in Maestro. Press `Cm
 | Quick Actions               | `Cmd+K`               | `Ctrl+K`               |
 | Toggle Left Panel           | `Opt+Cmd+Left`        | `Alt+Ctrl+Left`        |
 | Toggle Right Panel          | `Opt+Cmd+Right`       | `Alt+Ctrl+Right`       |
-| New Agent                   | `Cmd+N`               | `Ctrl+N`               |
+| New Session (instant)       | `Cmd+N`               | `Ctrl+N`               |
 | New Agent Wizard            | `Cmd+Shift+N`         | `Ctrl+Shift+N`         |
 | New Group Chat              | `Opt+Cmd+C`           | `Alt+Ctrl+C`           |
 | Remove Agent                | `Cmd+Shift+Backspace` | `Ctrl+Shift+Backspace` |

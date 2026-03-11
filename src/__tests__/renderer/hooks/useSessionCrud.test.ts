@@ -54,11 +54,13 @@ import type { UseSessionCrudDeps } from '../../../renderer/hooks/session/useSess
 import { useSessionStore } from '../../../renderer/stores/sessionStore';
 import { useSettingsStore } from '../../../renderer/stores/settingsStore';
 import { useUIStore } from '../../../renderer/stores/uiStore';
+import { useAgentStore } from '../../../renderer/stores/agentStore';
+import { useProjectStore } from '../../../renderer/stores/projectStore';
 import { useModalStore, getModalActions } from '../../../renderer/stores/modalStore';
 import { notifyToast } from '../../../renderer/stores/notificationStore';
 import { gitService } from '../../../renderer/services/git';
 import { validateNewSession } from '../../../renderer/utils/sessionValidation';
-import type { Session } from '../../../renderer/types';
+import type { Session, AgentConfig } from '../../../renderer/types';
 
 // ============================================================================
 // Window mock
@@ -67,6 +69,7 @@ import type { Session } from '../../../renderer/types';
 const mockMaestro = {
 	agents: {
 		get: vi.fn().mockResolvedValue({ id: 'claude-code', name: 'Claude Code', command: 'claude' }),
+		detect: vi.fn().mockResolvedValue([]),
 	},
 	stats: {
 		recordSessionCreated: vi.fn(),
@@ -1238,6 +1241,7 @@ describe('useSessionCrud', () => {
 			const { result } = renderHook(() => useSessionCrud(deps));
 
 			expect(typeof result.current.addNewSession).toBe('function');
+			expect(typeof result.current.quickCreateSession).toBe('function');
 			expect(typeof result.current.createNewSession).toBe('function');
 			expect(typeof result.current.deleteSession).toBe('function');
 			expect(typeof result.current.deleteWorktreeGroup).toBe('function');
@@ -1249,6 +1253,233 @@ describe('useSessionCrud', () => {
 			expect(typeof result.current.handleCreateGroupAndMove).toBe('function');
 			expect(typeof result.current.handleGroupCreated).toBe('function');
 			expect(result.current).toHaveProperty('pendingMoveToGroupSessionId');
+		});
+	});
+
+	// ========================================================================
+	// quickCreateSession
+	// ========================================================================
+	describe('quickCreateSession', () => {
+		const mockClaudeAgent: AgentConfig = {
+			id: 'claude-code',
+			name: 'Claude Code',
+			available: true,
+			command: 'claude',
+			args: [],
+		};
+
+		const mockHiddenAgent: AgentConfig = {
+			id: 'terminal',
+			name: 'Terminal',
+			available: true,
+			hidden: true,
+		};
+
+		function setupAgentStore(agents: AgentConfig[], detected = true) {
+			useAgentStore.setState({
+				availableAgents: agents,
+				agentsDetected: detected,
+			});
+		}
+
+		function setupProjectStore(projectId: string, repoPath: string) {
+			useProjectStore.setState({
+				activeProjectId: projectId,
+				projects: [{ id: projectId, name: 'Test Project', repoPath, createdAt: Date.now() }],
+			} as any);
+		}
+
+		it('creates a session named "Session 1" when no sessions exist', async () => {
+			setupAgentStore([mockClaudeAgent]);
+			setupProjectStore('proj-1', '/test/project');
+			useSessionStore.setState({ sessions: [], activeSessionId: '' });
+
+			const deps = createDeps();
+			const { result } = renderHook(() => useSessionCrud(deps));
+
+			await act(async () => {
+				await result.current.quickCreateSession();
+			});
+
+			const sessions = useSessionStore.getState().sessions;
+			expect(sessions).toHaveLength(1);
+			expect(sessions[0].name).toBe('Session 1');
+			expect(sessions[0].toolType).toBe('claude-code');
+			expect(sessions[0].cwd).toBe('/test/project');
+			expect(sessions[0].projectId).toBe('proj-1');
+		});
+
+		it('auto-increments name based on highest existing "Session N"', async () => {
+			setupAgentStore([mockClaudeAgent]);
+			setupProjectStore('proj-1', '/test/project');
+			const existingSessions = [
+				createSession({ id: 'sess-a', name: 'Session 1', projectId: 'proj-1' }),
+				createSession({ id: 'sess-b', name: 'Session 3', projectId: 'proj-1' }),
+			];
+			useSessionStore.setState({ sessions: existingSessions, activeSessionId: 'sess-a' });
+
+			const deps = createDeps();
+			const { result } = renderHook(() => useSessionCrud(deps));
+
+			await act(async () => {
+				await result.current.quickCreateSession();
+			});
+
+			const sessions = useSessionStore.getState().sessions;
+			expect(sessions).toHaveLength(3);
+			// Should be Session 4 (max of 1, 3 is 3 → 3 + 1 = 4)
+			expect(sessions[2].name).toBe('Session 4');
+		});
+
+		it('starts at "Session 1" when no sessions match the naming pattern', async () => {
+			setupAgentStore([mockClaudeAgent]);
+			setupProjectStore('proj-1', '/test/project');
+			const existingSessions = [
+				createSession({ id: 'sess-a', name: 'My Bot', projectId: 'proj-1' }),
+				createSession({ id: 'sess-b', name: 'Claude Agent', projectId: 'proj-1' }),
+			];
+			useSessionStore.setState({ sessions: existingSessions, activeSessionId: 'sess-a' });
+
+			const deps = createDeps();
+			const { result } = renderHook(() => useSessionCrud(deps));
+
+			await act(async () => {
+				await result.current.quickCreateSession();
+			});
+
+			const sessions = useSessionStore.getState().sessions;
+			expect(sessions[2].name).toBe('Session 1');
+		});
+
+		it('only counts sessions in the active project for auto-increment', async () => {
+			setupAgentStore([mockClaudeAgent]);
+			setupProjectStore('proj-1', '/test/project');
+			const existingSessions = [
+				createSession({ id: 'sess-a', name: 'Session 5', projectId: 'proj-2' }), // Different project
+				createSession({ id: 'sess-b', name: 'Session 2', projectId: 'proj-1' }),
+			];
+			useSessionStore.setState({ sessions: existingSessions, activeSessionId: 'sess-b' });
+
+			const deps = createDeps();
+			const { result } = renderHook(() => useSessionCrud(deps));
+
+			await act(async () => {
+				await result.current.quickCreateSession();
+			});
+
+			const sessions = useSessionStore.getState().sessions;
+			// Should be Session 3, not Session 6 — only proj-1's "Session 2" counts
+			expect(sessions[2].name).toBe('Session 3');
+		});
+
+		it('uses active session cwd over project repoPath', async () => {
+			setupAgentStore([mockClaudeAgent]);
+			setupProjectStore('proj-1', '/project/root');
+			const existingSessions = [
+				createSession({ id: 'sess-a', name: 'Existing', projectId: 'proj-1', cwd: '/specific/dir' }),
+			];
+			useSessionStore.setState({ sessions: existingSessions, activeSessionId: 'sess-a' });
+
+			const deps = createDeps();
+			const { result } = renderHook(() => useSessionCrud(deps));
+
+			await act(async () => {
+				await result.current.quickCreateSession();
+			});
+
+			const sessions = useSessionStore.getState().sessions;
+			expect(sessions[1].cwd).toBe('/specific/dir');
+		});
+
+		it('falls back to project repoPath when no active session', async () => {
+			setupAgentStore([mockClaudeAgent]);
+			setupProjectStore('proj-1', '/project/root');
+			useSessionStore.setState({ sessions: [], activeSessionId: '' });
+
+			const deps = createDeps();
+			const { result } = renderHook(() => useSessionCrud(deps));
+
+			await act(async () => {
+				await result.current.quickCreateSession();
+			});
+
+			const sessions = useSessionStore.getState().sessions;
+			expect(sessions[0].cwd).toBe('/project/root');
+		});
+
+		it('falls back to modal when no agents are available', async () => {
+			setupAgentStore([]);
+			setupProjectStore('proj-1', '/test/project');
+			useSessionStore.setState({ sessions: [], activeSessionId: '' });
+
+			const deps = createDeps();
+			const { result } = renderHook(() => useSessionCrud(deps));
+
+			await act(async () => {
+				await result.current.quickCreateSession();
+			});
+
+			// Should open modal instead of creating a session
+			expect(useModalStore.getState().isOpen('newInstance')).toBe(true);
+			expect(useSessionStore.getState().sessions).toHaveLength(0);
+		});
+
+		it('skips hidden agents when selecting default', async () => {
+			setupAgentStore([mockHiddenAgent, mockClaudeAgent]);
+			setupProjectStore('proj-1', '/test/project');
+			useSessionStore.setState({ sessions: [], activeSessionId: '' });
+
+			const deps = createDeps();
+			const { result } = renderHook(() => useSessionCrud(deps));
+
+			await act(async () => {
+				await result.current.quickCreateSession();
+			});
+
+			const sessions = useSessionStore.getState().sessions;
+			expect(sessions).toHaveLength(1);
+			expect(sessions[0].toolType).toBe('claude-code');
+		});
+
+		it('falls back to modal when no working directory is available', async () => {
+			setupAgentStore([mockClaudeAgent]);
+			// Project with no repoPath
+			useProjectStore.setState({
+				activeProjectId: 'proj-1',
+				projects: [{ id: 'proj-1', name: 'Empty Project', repoPath: '', createdAt: Date.now() }],
+			} as any);
+			useSessionStore.setState({ sessions: [], activeSessionId: '' });
+
+			const deps = createDeps();
+			const { result } = renderHook(() => useSessionCrud(deps));
+
+			await act(async () => {
+				await result.current.quickCreateSession();
+			});
+
+			expect(useModalStore.getState().isOpen('newInstance')).toBe(true);
+			expect(useSessionStore.getState().sessions).toHaveLength(0);
+		});
+
+		it('refreshes agent cache when agents not yet detected', async () => {
+			// Start with empty cache and agentsDetected=false
+			setupAgentStore([], false);
+			// After refresh, agents will be available
+			mockMaestro.agents.detect.mockResolvedValueOnce([mockClaudeAgent]);
+			setupProjectStore('proj-1', '/test/project');
+			useSessionStore.setState({ sessions: [], activeSessionId: '' });
+
+			const deps = createDeps();
+			const { result } = renderHook(() => useSessionCrud(deps));
+
+			await act(async () => {
+				await result.current.quickCreateSession();
+			});
+
+			expect(mockMaestro.agents.detect).toHaveBeenCalled();
+			const sessions = useSessionStore.getState().sessions;
+			expect(sessions).toHaveLength(1);
+			expect(sessions[0].name).toBe('Session 1');
 		});
 	});
 });

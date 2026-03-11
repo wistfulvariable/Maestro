@@ -1737,6 +1737,7 @@ function MaestroConsoleInner() {
 	// Session CRUD operations (create, delete, rename, bookmark, drag-drop, group-move)
 	const {
 		addNewSession,
+		quickCreateSession,
 		createNewSession,
 		deleteSession,
 		deleteWorktreeGroup,
@@ -1950,7 +1951,7 @@ function MaestroConsoleInner() {
 		defaultShowThinking,
 		setLeftSidebarOpen,
 		setRightPanelOpen,
-		addNewSession,
+		addNewSession: quickCreateSession,
 		deleteSession,
 		setQuickActionInitialMode,
 		setQuickActionOpen,
@@ -2081,7 +2082,7 @@ function MaestroConsoleInner() {
 		sessionTabs,
 		handleSessionTabSelect,
 		handleSessionTabClose,
-		handleSessionTabNew,
+		handleSessionTabNew: quickCreateSession,
 		handleSessionTabReorder,
 	};
 
@@ -2345,7 +2346,7 @@ function MaestroConsoleInner() {
 		showConfirmation,
 		createNewGroup,
 		handleCreateGroupAndMove,
-		addNewSession,
+		addNewSession: quickCreateSession,
 		deleteSession,
 		deleteWorktreeGroup,
 		handleEditAgent,
@@ -3095,7 +3096,7 @@ function MaestroConsoleInner() {
 									activeSessionId={activeSessionId}
 									onSessionSelect={handleSessionTabSelect}
 									onSessionClose={handleSessionTabClose}
-									onNewSession={handleSessionTabNew}
+									onNewSession={quickCreateSession}
 								/>
 							</ErrorBoundary>
 						</div>

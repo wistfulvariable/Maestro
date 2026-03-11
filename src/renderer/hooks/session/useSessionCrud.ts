@@ -3,6 +3,7 @@
  *
  * Handles session create/read/update/delete operations:
  *   - addNewSession (opens modal)
+ *   - quickCreateSession (instant creation with defaults)
  *   - createNewSession (core creation logic)
  *   - deleteSession (opens confirmation modal)
  *   - deleteWorktreeGroup (removes group + all agents)
@@ -20,6 +21,7 @@ import { useSessionStore } from '../../stores/sessionStore';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { useUIStore } from '../../stores/uiStore';
 import { useProjectStore } from '../../stores/projectStore';
+import { useAgentStore } from '../../stores/agentStore';
 import { getModalActions } from '../../stores/modalStore';
 import { notifyToast } from '../../stores/notificationStore';
 import { generateId } from '../../utils/ids';
@@ -69,6 +71,8 @@ export interface UseSessionCrudReturn {
 			workingDirOverride?: string;
 		}
 	) => Promise<void>;
+	/** Instantly creates a session with default agent, auto-name, and current cwd */
+	quickCreateSession: () => Promise<void>;
 	/** Opens the delete agent confirmation modal */
 	deleteSession: (id: string) => void;
 	/** Deletes entire worktree group and all its agents */
@@ -281,6 +285,54 @@ export function useSessionCrud(deps: UseSessionCrudDeps): UseSessionCrudReturn {
 	);
 
 	// ========================================================================
+	// quickCreateSession — instant session with defaults (no modal)
+	// ========================================================================
+	const quickCreateSession = useCallback(async () => {
+		// 1. Default agent — first available, non-hidden
+		const { availableAgents, agentsDetected, refreshAgents } = useAgentStore.getState();
+		let agents = availableAgents;
+		if (!agentsDetected || agents.length === 0) {
+			await refreshAgents();
+			agents = useAgentStore.getState().availableAgents;
+		}
+		const defaultAgent = agents.find((a) => a.available && !a.hidden);
+		if (!defaultAgent) {
+			// No agents detected — fall back to modal so user can configure custom path
+			setNewInstanceModalOpen(true);
+			return;
+		}
+
+		// 2. Working directory — from active session or active project
+		const activeProjectId = useProjectStore.getState().activeProjectId;
+		const projects = useProjectStore.getState().projects;
+		const activeProject = projects.find((p) => p.id === activeProjectId);
+		const currentSessions = useSessionStore.getState().sessions;
+		const currentActiveSessionId = useSessionStore.getState().activeSessionId;
+		const activeSession = currentSessions.find((s) => s.id === currentActiveSessionId);
+		const workingDir = activeSession?.cwd || activeProject?.repoPath || '';
+		if (!workingDir) {
+			// No directory available — fall back to modal
+			setNewInstanceModalOpen(true);
+			return;
+		}
+
+		// 3. Auto-increment name — "Session 1", "Session 2", etc.
+		const projectSessions = currentSessions.filter((s) => s.projectId === activeProjectId);
+		const sessionNamePattern = /^Session (\d+)$/;
+		let maxNumber = 0;
+		for (const s of projectSessions) {
+			const match = s.name.match(sessionNamePattern);
+			if (match) {
+				maxNumber = Math.max(maxNumber, parseInt(match[1], 10));
+			}
+		}
+		const newName = `Session ${maxNumber + 1}`;
+
+		// 4. Create using existing core logic (no optional params)
+		await createNewSession(defaultAgent.id, workingDir, newName);
+	}, [createNewSession, setNewInstanceModalOpen]);
+
+	// ========================================================================
 	// deleteSession — opens the delete agent confirmation modal
 	// ========================================================================
 	const deleteSession = useCallback(
@@ -465,6 +517,7 @@ export function useSessionCrud(deps: UseSessionCrudDeps): UseSessionCrudReturn {
 	return {
 		addNewSession,
 		createNewSession,
+		quickCreateSession,
 		deleteSession,
 		deleteWorktreeGroup,
 		startRenamingSession,
